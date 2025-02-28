@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Mobilier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calculator Mobilier la Comandă</h1>
+        <div id="categories"></div>
+        <button onclick="addCategory()">+ Adaugă categorie</button>
+        
+        <div class="totals">
+            <h2>Total: <span id="total-euro">0</span> €</h2>
+            <h2>Total: <span id="total-lei">0</span> Lei</h2>
+        </div>
+        <button onclick="saveData()">Salvează</button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
