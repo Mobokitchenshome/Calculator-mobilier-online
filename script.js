@@ -2,7 +2,7 @@ let categories = JSON.parse(localStorage.getItem("categories")) || {};
 
 function init() {
     renderCategories();
-    loadSavedData();
+    calculateTotal();
 }
 
 // Generare câmpuri
@@ -52,7 +52,11 @@ function renderCategories() {
             priceInput.type = "number";
             priceInput.value = item.price;
             priceInput.classList.add("price-input");
-            priceInput.oninput = calculateTotal;
+            priceInput.oninput = () => {
+                categories[category][index].price = parseFloat(priceInput.value) || 0;
+                saveCategories();
+                calculateTotal();
+            };
 
             let deleteSubBtn = document.createElement("button");
             deleteSubBtn.textContent = "✖";
@@ -138,17 +142,14 @@ function saveCategories() {
 // Calcul totaluri
 function calculateTotal() {
     let totalEuro = 0;
-    document.querySelectorAll(".price-input").forEach(input => {
-        totalEuro += parseFloat(input.value) || 0;
-    });
-
+    for (let category in categories) {
+        categories[category].forEach(item => {
+            totalEuro += item.price;
+        });
+    }
+    
     document.getElementById("total-euro").textContent = totalEuro.toFixed(2);
     document.getElementById("total-lei").textContent = (totalEuro * 19).toFixed(2);
-}
-
-// Încărcare date salvate
-function loadSavedData() {
-    calculateTotal();
 }
 
 // Inițializare
