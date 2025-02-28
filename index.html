@@ -7,18 +7,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Calculator Mobilier la Comandă</h1>
-        <div id="categories"></div>
-        <button onclick="addCategory()">+ Adaugă categorie</button>
-        
-        <div class="totals">
-            <h2>Total: <span id="total-euro">0</span> €</h2>
-            <h2>Total: <span id="total-lei">0</span> Lei</h2>
-        </div>
-        <button onclick="saveData()">Salvează</button>
-    </div>
-    
+    <h1>Calculator Mobilier la Comandă</h1>
+
+    <div id="categories"></div>
+
+    <button onclick="addCategory()">Adaugă Categorie</button>
+    <button onclick="exportToPDF()">Exportă PDF</button>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="jsPDF.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
