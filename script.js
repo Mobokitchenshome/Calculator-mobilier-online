@@ -58,12 +58,36 @@ function renderCategories() {
                 calculateTotal();
             };
 
+            let quantityInput = document.createElement("input");
+            quantityInput.type = "number";
+            quantityInput.value = item.quantity || 1;
+            quantityInput.classList.add("quantity-input");
+            quantityInput.oninput = () => {
+                categories[category][index].quantity = parseFloat(quantityInput.value) || 1;
+                saveCategories();
+                calculateTotal();
+            };
+
+            let unitSelect = document.createElement("select");
+            unitSelect.classList.add("unit-select");
+            unitSelect.innerHTML = `
+                <option value="buc" ${item.unit === "buc" ? "selected" : ""}>buc</option>
+                <option value="m²" ${item.unit === "m²" ? "selected" : ""}>m²</option>
+            `;
+            unitSelect.onchange = () => {
+                categories[category][index].unit = unitSelect.value;
+                saveCategories();
+                calculateTotal();
+            };
+
             let deleteSubBtn = document.createElement("button");
             deleteSubBtn.textContent = "✖";
             deleteSubBtn.onclick = () => deleteSubfield(category, index);
 
             label.appendChild(inputName);
             label.appendChild(priceInput);
+            label.appendChild(quantityInput);
+            label.appendChild(unitSelect);
             label.appendChild(deleteSubBtn);
             subfieldsDiv.appendChild(label);
         });
@@ -115,7 +139,7 @@ function deleteCategory(category) {
 function addSubfield(category) {
     let name = prompt("Introduceți numele subcâmpului:");
     if (name) {
-        categories[category].push({ name, price: 0 });
+        categories[category].push({ name, price: 0, quantity: 1, unit: "buc" });
         saveCategories();
         renderCategories();
     }
@@ -144,7 +168,7 @@ function calculateTotal() {
     let totalEuro = 0;
     for (let category in categories) {
         categories[category].forEach(item => {
-            totalEuro += item.price;
+            totalEuro += item.price * item.quantity;
         });
     }
     
