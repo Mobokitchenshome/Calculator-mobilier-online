@@ -1,140 +1,180 @@
-// Configurare Firebase (înlocuiește cu datele tale)
-const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "proiectul-tau.firebaseapp.com",
-    databaseURL: "https://proiectul-tau.firebaseio.com",
-    projectId: "proiectul-tau",
-    storageBucket: "proiectul-tau.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdefghij"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+let categories = JSON.parse(localStorage.getItem("categories")) || {};
 
-// Datele predefinite pentru calculator
-let categories = {
-    "Blaturi Compact 12mm": { subcategories: { "HPL Fundermax": { quantity: 0, price: 100, image: "" } } },
-    "Carcasă": { subcategories: { "Egger": { quantity: 0, price: 50, image: "" }, "Krono": { quantity: 0, price: 45, image: "" } } }
-};
-
-// Salvare date în Firebase
-function saveCategories() {
-    database.ref("categories").set(categories);
+function init() {
+    renderCategories();
+    calculateTotal();
 }
 
-// Încărcare date din Firebase
-function loadCategories() {
-    database.ref("categories").once("value", snapshot => {
-        if (snapshot.exists()) {
-            categories = snapshot.val();
-        }
-        renderCalculator();
-    });
-}
-
-// Afișează calculatorul pe pagină
-function renderCalculator() {
-    const container = document.getElementById("calculator");
+// Generare câmpuri
+function renderCategories() {
+    const container = document.getElementById("categories");
     container.innerHTML = "";
 
-    Object.keys(categories).forEach(category => {
+    for (let category in categories) {
         let div = document.createElement("div");
         div.classList.add("category");
-        div.innerHTML = `<h3>${category}</h3>`;
 
-        Object.keys(categories[category].subcategories).forEach(subcategory => {
-            let subcat = categories[category].subcategories[subcategory];
-            let subDiv = document.createElement("div");
-            subDiv.classList.add("subcategory");
+        let titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.value = category;
+        titleInput.classList.add("category-title");
+        titleInput.onchange = () => editCategoryName(category, titleInput.value);
 
-            subDiv.innerHTML = `
-                <label>${subcategory}</label>
-                <input type="number" placeholder="Cantitate" value="${subcat.quantity}" onchange="updateQuantity('${category}', '${subcategory}', this.value)">
-                <input type="number" placeholder="Preț (€)" value="${subcat.price}" onchange="updatePrice('${category}', '${subcategory}', this.value)">
-                <input type="file" accept="image/*" onchange="uploadImage(this, '${category}', '${subcategory}')">
-                <img id="img-${category}-${subcategory}" src="${subcat.image}" alt="Imagine" style="width: 100px; display: block;">
+        let toggleBtn = document.createElement("button");
+        toggleBtn.textContent = "▼";
+        toggleBtn.onclick = () => toggleSubfields(category);
+
+        let deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "✖";
+        deleteBtn.onclick = () => deleteCategory(category);
+
+        let header = document.createElement("div");
+        header.appendChild(titleInput);
+        header.appendChild(toggleBtn);
+        header.appendChild(deleteBtn);
+
+        div.appendChild(header);
+
+        let subfieldsDiv = document.createElement("div");
+        subfieldsDiv.id = category;
+        subfieldsDiv.classList.add("subfields");
+
+        categories[category].forEach((item, index) => {
+            let label = document.createElement("div");
+
+            let inputName = document.createElement("input");
+            inputName.type = "text";
+            inputName.value = item.name;
+            inputName.classList.add("subfield-name");
+            inputName.onchange = () => editSubfield(category, index, inputName.value);
+
+            let priceInput = document.createElement("input");
+            priceInput.type = "number";
+            priceInput.value = item.price;
+            priceInput.classList.add("price-input");
+            priceInput.oninput = () => {
+                categories[category][index].price = parseFloat(priceInput.value) || 0;
+                saveCategories();
+                calculateTotal();
+            };
+
+            let quantityInput = document.createElement("input");
+            quantityInput.type = "number";
+            quantityInput.value = item.quantity || 1;
+            quantityInput.classList.add("quantity-input");
+            quantityInput.oninput = () => {
+                categories[category][index].quantity = parseFloat(quantityInput.value) || 1;
+                saveCategories();
+                calculateTotal();
+            };
+
+            let unitSelect = document.createElement("select");
+            unitSelect.classList.add("unit-select");
+            unitSelect.innerHTML = `
+                <option value="buc" ${item.unit === "buc" ? "selected" : ""}>buc</option>
+                <option value="m²" ${item.unit === "m²" ? "selected" : ""}>m²</option>
             `;
+            unitSelect.onchange = () => {
+                categories[category][index].unit = unitSelect.value;
+                saveCategories();
+                calculateTotal();
+            };
 
-            div.appendChild(subDiv);
+            let deleteSubBtn = document.createElement("button");
+            deleteSubBtn.textContent = "✖";
+            deleteSubBtn.onclick = () => deleteSubfield(category, index);
+
+            label.appendChild(inputName);
+            label.appendChild(priceInput);
+            label.appendChild(quantityInput);
+            label.appendChild(unitSelect);
+            label.appendChild(deleteSubBtn);
+            subfieldsDiv.appendChild(label);
         });
 
+        let addSubBtn = document.createElement("button");
+        addSubBtn.textContent = "+ Adaugă subcâmp";
+        addSubBtn.onclick = () => addSubfield(category);
+
+        subfieldsDiv.appendChild(addSubBtn);
+        div.appendChild(subfieldsDiv);
         container.appendChild(div);
-    });
-
-    updateTotal();
+    }
 }
 
-// Actualizare cantitate și preț
-function updateQuantity(category, subcategory, value) {
-    categories[category].subcategories[subcategory].quantity = parseFloat(value) || 0;
+// Afișare/ascundere subcâmpuri
+function toggleSubfields(id) {
+    let element = document.getElementById(id);
+    element.style.display = element.style.display === "none" ? "block" : "none";
+}
+
+// Adăugare categorie nouă
+function addCategory() {
+    let name = prompt("Introduceți numele categoriei:");
+    if (name && !categories[name]) {
+        categories[name] = [];
+        saveCategories();
+        renderCategories();
+    }
+}
+
+// Editare nume categorie
+function editCategoryName(oldName, newName) {
+    if (newName && oldName !== newName && !categories[newName]) {
+        categories[newName] = categories[oldName];
+        delete categories[oldName];
+        saveCategories();
+        renderCategories();
+    }
+}
+
+// Ștergere categorie
+function deleteCategory(category) {
+    delete categories[category];
     saveCategories();
-    updateTotal();
+    renderCategories();
 }
 
-function updatePrice(category, subcategory, value) {
-    categories[category].subcategories[subcategory].price = parseFloat(value) || 0;
+// Adăugare subcâmp
+function addSubfield(category) {
+    let name = prompt("Introduceți numele subcâmpului:");
+    if (name) {
+        categories[category].push({ name, price: 0, quantity: 1, unit: "buc" });
+        saveCategories();
+        renderCategories();
+    }
+}
+
+// Editare subcâmp
+function editSubfield(category, index, newName) {
+    categories[category][index].name = newName;
     saveCategories();
-    updateTotal();
 }
 
-// Calcul total
-function updateTotal() {
-    let totalEuro = Object.values(categories).reduce((sum, cat) => 
-        sum + Object.values(cat.subcategories).reduce((s, sub) => s + sub.quantity * sub.price, 0), 0);
-    
-    document.getElementById("totalEuro").textContent = totalEuro.toFixed(2);
-    document.getElementById("totalLei").textContent = (totalEuro * 19).toFixed(2);
+// Ștergere subcâmp
+function deleteSubfield(category, index) {
+    categories[category].splice(index, 1);
+    saveCategories();
+    renderCategories();
 }
 
-// Încărcare imagini
-function uploadImage(input, category, subcategory) {
-    let file = input.files[0];
-    if (!file) return;
+// Salvare date
+function saveCategories() {
+    localStorage.setItem("categories", JSON.stringify(categories));
+}
 
-    let storageRef = firebase.storage().ref(`images/${category}/${subcategory}/${file.name}`);
-    storageRef.put(file).then(snapshot => {
-        snapshot.ref.getDownloadURL().then(url => {
-            categories[category].subcategories[subcategory].image = url;
-            saveCategories();
-            document.getElementById(`img-${category}-${subcategory}`).src = url;
+// Calcul totaluri
+function calculateTotal() {
+    let totalEuro = 0;
+    for (let category in categories) {
+        categories[category].forEach(item => {
+            totalEuro += item.price * item.quantity;
         });
-    });
+    }
+    
+    document.getElementById("total-euro").textContent = totalEuro.toFixed(2);
+    document.getElementById("total-lei").textContent = (totalEuro * 19).toFixed(2);
 }
 
-// Export PDF
-async function exportToPDF() {
-    const existingPdfBytes = await fetch("Ofertă Oleg.pdf").then(res => res.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-    const page = pdfDoc.addPage([595, 842]);
-    
-    let y = 800;
-    page.drawText("Detalii Ofertă:", { x: 50, y, size: 16 });
-    y -= 20;
-
-    Object.keys(categories).forEach(category => {
-        page.drawText(category, { x: 50, y, size: 14 });
-        y -= 15;
-
-        Object.keys(categories[category].subcategories).forEach(subcategory => {
-            let subcat = categories[category].subcategories[subcategory];
-            page.drawText(`${subcategory}: ${subcat.quantity} x ${subcat.price}€ = ${(subcat.quantity * subcat.price).toFixed(2)}€`, { x: 60, y, size: 12 });
-            y -= 15;
-        });
-        y -= 10;
-    });
-
-    const totalEuro = Object.values(categories).reduce((sum, cat) => 
-        sum + Object.values(cat.subcategories).reduce((s, sub) => s + sub.quantity * sub.price, 0), 0);
-    
-    page.drawText(`Total: ${totalEuro.toFixed(2)}€`, { x: 50, y - 20, size: 16 });
-
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Oferta_Finală.pdf";
-    link.click();
-}
-
-document.getElementById("exportPDF").addEventListener("click", exportToPDF);
-document.addEventListener("DOMContentLoaded", loadCategories);
+// Inițializare
+document.addEventListener("DOMContentLoaded", init);
