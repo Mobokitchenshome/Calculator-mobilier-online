@@ -19,3 +19,11 @@ const database = getDatabase(app);
 
 // Test: Salvează un mesaj în Firebase
 set(ref(database, "test"), { message: "Test Firebase" });
+// 🔹 Test - Salvează date manual în Firebase
+set(ref(database, "test"), { message: "Test Firebase" })
+    .then(() => {
+        console.log("✅ Datele au fost salvate cu succes!");
+    })
+    .catch((error) => {
+        console.error("❌ Eroare la salvare:", error);
+    });
