@@ -1,5 +1,6 @@
+// Importă Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 // Configurare Firebase
 const firebaseConfig = {
@@ -17,13 +18,34 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-// Test: Salvează un mesaj în Firebase
-set(ref(database, "test"), { message: "Test Firebase" });
-// 🔹 Test - Salvează date manual în Firebase
-set(ref(database, "test"), { message: "Test Firebase" })
-    .then(() => {
-        console.log("✅ Datele au fost salvate cu succes!");
-    })
-    .catch((error) => {
-        console.error("❌ Eroare la salvare:", error);
-    });
+// 🔹 Funcție pentru testarea Firebase
+function testFirebase() {
+    set(ref(database, "test"), { message: "Test Firebase" })
+        .then(() => {
+            console.log("✅ Datele au fost salvate cu succes în Firebase!");
+        })
+        .catch((error) => {
+            console.error("❌ Eroare la salvare:", error);
+        });
+}
+
+// 🔹 Funcție pentru adăugarea unei categorii
+function addCategory() {
+    let categoryName = prompt("Introdu numele categoriei:");
+    if (!categoryName) return;
+
+    // Salvăm categoria în Firebase
+    set(ref(database, "categories/" + categoryName), { subcategories: {} })
+        .then(() => {
+            console.log(`✅ Categoria "${categoryName}" a fost adăugată!`);
+        })
+        .catch((error) => {
+            console.error("❌ Eroare la adăugare:", error);
+        });
+}
+
+// 🔹 Adaugă event listener pentru testare
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("🔹 Pagina s-a încărcat!");
+    testFirebase();
+});
