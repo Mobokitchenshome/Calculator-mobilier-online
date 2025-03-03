@@ -18,7 +18,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-// 🔹 Funcție pentru testarea Firebase
+// 🔹 Funcție globală pentru adăugarea unei categorii
+window.addCategory = function () {
+    let categoryName = prompt("Introdu numele categoriei:");
+    if (!categoryName) return;
+
+    // Salvăm categoria în Firebase
+    set(ref(database, "categories/" + categoryName), { subcategories: {} })
+        .then(() => {
+            console.log(`✅ Categoria "${categoryName}" a fost adăugată!`);
+            alert(`✅ Categoria "${categoryName}" a fost adăugată!`);
+        })
+        .catch((error) => {
+            console.error("❌ Eroare la adăugare:", error);
+            alert("❌ Eroare la adăugare în Firebase.");
+        });
+};
+
+// 🔹 Test - Salvează date manual în Firebase
 function testFirebase() {
     set(ref(database, "test"), { message: "Test Firebase" })
         .then(() => {
@@ -29,22 +46,7 @@ function testFirebase() {
         });
 }
 
-// 🔹 Funcție pentru adăugarea unei categorii
-function addCategory() {
-    let categoryName = prompt("Introdu numele categoriei:");
-    if (!categoryName) return;
-
-    // Salvăm categoria în Firebase
-    set(ref(database, "categories/" + categoryName), { subcategories: {} })
-        .then(() => {
-            console.log(`✅ Categoria "${categoryName}" a fost adăugată!`);
-        })
-        .catch((error) => {
-            console.error("❌ Eroare la adăugare:", error);
-        });
-}
-
-// 🔹 Adaugă event listener pentru testare
+// 🔹 Testăm conexiunea la Firebase când pagina se încarcă
 document.addEventListener("DOMContentLoaded", () => {
     console.log("🔹 Pagina s-a încărcat!");
     testFirebase();
