@@ -1,22 +1,6 @@
-// Importă Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
-// Configurare Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDVAp7PaK7dNksfVhjXio4svEraal-7x_M",
-    authDomain: "mobokitchenshome.firebaseapp.com",
-    databaseURL: "https://mobokitchenshome-default-rtdb.firebaseio.com",
-    projectId: "mobokitchenshome",
-    storageBucket: "mobokitchenshome.appspot.com",
-    messagingSenderId: "1060936386110",
-    appId: "1:1060936386110:web:cc26a6a3741b4d1bdff36f",
-    measurementId: "G-E9CPCNXR7V"
-};
-
-// Inițializează Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// Importă Firebase din configurația separată
+import { database } from "./firebase-config.js";
+import { ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 // 🔹 Funcție globală pentru adăugarea unei categorii
 window.addCategory = function () {
@@ -35,7 +19,7 @@ window.addCategory = function () {
         });
 };
 
-// 🔹 Test - Salvează date manual în Firebase
+// 🔹 Test - Verifică dacă Firebase salvează date
 function testFirebase() {
     set(ref(database, "test"), { message: "Test Firebase" })
         .then(() => {
