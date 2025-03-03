@@ -4,8 +4,13 @@ import { ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1
 
 // 🔹 Funcție globală pentru adăugarea unei categorii
 window.addCategory = function () {
+    alert("✅ Butonul a fost apăsat!"); // Debug: verificăm dacă funcția este apelată
+
     let categoryName = prompt("Introdu numele categoriei:");
-    if (!categoryName) return;
+    if (!categoryName) {
+        alert("❌ Numele categoriei nu a fost introdus.");
+        return;
+    }
 
     // Salvăm categoria în Firebase
     set(ref(database, "categories/" + categoryName), { subcategories: {} })
