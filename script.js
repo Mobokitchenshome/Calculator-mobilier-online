@@ -4,22 +4,35 @@ import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/fir
 
 // Configurare Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDVAp7PaK7dNksfVhjXio4svEraal-7x_M",
-  authDomain: "mobokitchenshome.firebaseapp.com",
-  databaseURL: "https://mobokitchenshome-default-rtdb.firebaseio.com",  // ADĂUGAT LINK PENTRU DATABASE
-  projectId: "mobokitchenshome",
-  storageBucket: "mobokitchenshome.appspot.com",  // CORECTAT LINK-UL STORAGE
-  messagingSenderId: "1060936386110",
-  appId: "1:1060936386110:web:cc26a6a3741b4d1bdff36f",
-  measurementId: "G-E9CPCNXR7V"
+    apiKey: "AIzaSyDVAp7PaK7dNksfVhjXio4svEraal-7x_M",
+    authDomain: "mobokitchenshome.firebaseapp.com",
+    databaseURL: "https://mobokitchenshome-default-rtdb.firebaseio.com",
+    projectId: "mobokitchenshome",
+    storageBucket: "mobokitchenshome.appspot.com",
+    messagingSenderId: "1060936386110",
+    appId: "1:1060936386110:web:cc26a6a3741b4d1bdff36f",
+    measurementId: "G-E9CPCNXR7V"
 };
 
 // Inițializează Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-// Obiect unde salvăm datele calculatorului
-let categories = {};
+// Categoriile inițiale
+const defaultCategories = {
+    "Blaturi Compact 12mm": {
+        subcategories: {
+            "HPL Fundermax": { quantity: 0, price: 100 },
+            "HPL Smart": { quantity: 0, price: 120 }
+        }
+    },
+    "Carcasă": {
+        subcategories: {
+            "Egger": { quantity: 0, price: 50 },
+            "Krono": { quantity: 0, price: 45 }
+        }
+    }
+};
 
 // Salvare automată în Firebase
 function saveToFirebase() {
@@ -32,8 +45,11 @@ function loadFromFirebase() {
     get(dbRef).then((snapshot) => {
         if (snapshot.exists()) {
             categories = snapshot.val();
-            renderCalculator();
+        } else {
+            categories = defaultCategories;
+            saveToFirebase(); // Salvăm categoriile inițiale dacă nu există date
         }
+        renderCalculator();
     });
 }
 
