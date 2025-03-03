@@ -1,42 +1,54 @@
 // Importă Firebase din configurația separată
 import { database } from "./firebase-config.js";
-import { ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+import { ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-// 🔹 Funcție globală pentru adăugarea unei categorii
-window.addCategory = function () {
-    alert("✅ Butonul a fost apăsat!"); // Debug: verificăm dacă funcția este apelată
+// Elemente HTML
+const modal = document.getElementById("categoryModal");
+const openModalBtn = document.getElementById("openModal");
+const closeModalBtn = document.querySelector(".close");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+const categoryInput = document.getElementById("categoryName");
+const messageDiv = document.getElementById("message");
 
-    let categoryName = prompt("Introdu numele categoriei:");
-    if (!categoryName) {
-        alert("❌ Numele categoriei nu a fost introdus.");
-        return;
-    }
+// Deschidere și închidere modal
+openModalBtn.onclick = () => modal.style.display = "block";
+closeModalBtn.onclick = () => modal.style.display = "none";
+window.onclick = (event) => { if (event.target === modal) modal.style.display = "none"; };
 
-    // Salvăm categoria în Firebase
-    set(ref(database, "categories/" + categoryName), { subcategories: {} })
-        .then(() => {
-            console.log(`✅ Categoria "${categoryName}" a fost adăugată!`);
-            alert(`✅ Categoria "${categoryName}" a fost adăugată!`);
-        })
-        .catch((error) => {
-            console.error("❌ Eroare la adăugare:", error);
-            alert("❌ Eroare la adăugare în Firebase.");
-        });
-};
-
-// 🔹 Test - Verifică dacă Firebase salvează date
-function testFirebase() {
-    set(ref(database, "test"), { message: "Test Firebase" })
-        .then(() => {
-            console.log("✅ Datele au fost salvate cu succes în Firebase!");
-        })
-        .catch((error) => {
-            console.error("❌ Eroare la salvare:", error);
-        });
+// Afișare mesaje de succes sau eroare
+function showMessage(text, isSuccess = true) {
+    messageDiv.innerHTML = text;
+    messageDiv.style.color = isSuccess ? "green" : "red";
+    setTimeout(() => messageDiv.innerHTML = "", 3000);
 }
 
-// 🔹 Testăm conexiunea la Firebase când pagina se încarcă
+// Verifică dacă categoria există deja
+async function checkCategoryExists(categoryName) {
+    const snapshot = await get(ref(database, "categories/" + categoryName));
+    return snapshot.exists();
+}
+
+// Adaugă categorie
+addCategoryBtn.onclick = async function () {
+    let categoryName = categoryInput.value.trim();
+    if (!categoryName) return showMessage("❌ Introdu un nume pentru categorie!", false);
+
+    if (await checkCategoryExists(categoryName)) {
+        return showMessage("❌ Categoria există deja!", false);
+    }
+
+    set(ref(database, "categories/" + categoryName), { subcategories: {} })
+        .then(() => {
+            showMessage(`✅ Categoria "${categoryName}" a fost adăugată!`);
+            categoryInput.value = "";
+            modal.style.display = "none";
+        })
+        .catch(() => showMessage("❌ Eroare la adăugare în Firebase.", false));
+};
+
+// Test Firebase la încărcarea paginii
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("🔹 Pagina s-a încărcat!");
-    testFirebase();
+    set(ref(database, "test"), { message: "Test Firebase" })
+        .then(() => console.log("✅ Firebase funcționează!"))
+        .catch(() => console.error("❌ Eroare la conectare."));
 });
