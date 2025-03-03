@@ -19,9 +19,20 @@
     </div>
 
     <!-- Buton pentru adăugarea unei categorii -->
-    <button onclick="addCategory()">Adaugă Categorie</button>
+    <button id="openModal">Adaugă Categorie</button>
 
-    <!-- Scripturi necesare -->
+    <!-- Modal pentru introducerea categoriei -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Adaugă Categorie</h2>
+            <input type="text" id="categoryName" placeholder="Numele categoriei">
+            <button id="addCategoryBtn">Salvează</button>
+        </div>
+    </div>
+
+    <div id="message"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
