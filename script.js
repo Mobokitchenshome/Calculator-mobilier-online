@@ -1,180 +1,101 @@
-let categories = JSON.parse(localStorage.getItem("categories")) || {};
+// Importă Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-function init() {
-    renderCategories();
-    calculateTotal();
+// 🔹 Configurare Firebase (înlocuiește cu datele tale)
+const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "proiectul-tău.firebaseapp.com",
+    databaseURL: "https://proiectul-tău.firebaseio.com",
+    projectId: "proiectul-tău",
+    storageBucket: "proiectul-tău.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdefghij"
+};
+
+// 🔹 Inițializează Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// 🔹 Obiectul unde stocăm datele
+let categories = {};
+
+// 🔹 Salvare automată în Firebase
+function saveToFirebase() {
+    set(ref(database, "calculator"), categories);
 }
 
-// Generare câmpuri
-function renderCategories() {
-    const container = document.getElementById("categories");
+// 🔹 Încărcare date din Firebase
+function loadFromFirebase() {
+    const dbRef = ref(database, "calculator");
+    get(dbRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            categories = snapshot.val();
+            renderCalculator();
+        }
+    });
+}
+
+// 🔹 Ascultă modificările în timp real
+onValue(ref(database, "calculator"), (snapshot) => {
+    if (snapshot.exists()) {
+        categories = snapshot.val();
+        renderCalculator();
+    }
+});
+
+// 🔹 Funcție pentru a genera calculatorul pe pagină
+function renderCalculator() {
+    const container = document.getElementById("calculator");
     container.innerHTML = "";
 
-    for (let category in categories) {
+    Object.keys(categories).forEach(category => {
         let div = document.createElement("div");
         div.classList.add("category");
+        div.innerHTML = `<h3>${category}</h3>`;
 
-        let titleInput = document.createElement("input");
-        titleInput.type = "text";
-        titleInput.value = category;
-        titleInput.classList.add("category-title");
-        titleInput.onchange = () => editCategoryName(category, titleInput.value);
+        Object.keys(categories[category].subcategories).forEach(subcategory => {
+            let subcat = categories[category].subcategories[subcategory];
+            let subDiv = document.createElement("div");
+            subDiv.classList.add("subcategory");
 
-        let toggleBtn = document.createElement("button");
-        toggleBtn.textContent = "▼";
-        toggleBtn.onclick = () => toggleSubfields(category);
-
-        let deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "✖";
-        deleteBtn.onclick = () => deleteCategory(category);
-
-        let header = document.createElement("div");
-        header.appendChild(titleInput);
-        header.appendChild(toggleBtn);
-        header.appendChild(deleteBtn);
-
-        div.appendChild(header);
-
-        let subfieldsDiv = document.createElement("div");
-        subfieldsDiv.id = category;
-        subfieldsDiv.classList.add("subfields");
-
-        categories[category].forEach((item, index) => {
-            let label = document.createElement("div");
-
-            let inputName = document.createElement("input");
-            inputName.type = "text";
-            inputName.value = item.name;
-            inputName.classList.add("subfield-name");
-            inputName.onchange = () => editSubfield(category, index, inputName.value);
-
-            let priceInput = document.createElement("input");
-            priceInput.type = "number";
-            priceInput.value = item.price;
-            priceInput.classList.add("price-input");
-            priceInput.oninput = () => {
-                categories[category][index].price = parseFloat(priceInput.value) || 0;
-                saveCategories();
-                calculateTotal();
-            };
-
-            let quantityInput = document.createElement("input");
-            quantityInput.type = "number";
-            quantityInput.value = item.quantity || 1;
-            quantityInput.classList.add("quantity-input");
-            quantityInput.oninput = () => {
-                categories[category][index].quantity = parseFloat(quantityInput.value) || 1;
-                saveCategories();
-                calculateTotal();
-            };
-
-            let unitSelect = document.createElement("select");
-            unitSelect.classList.add("unit-select");
-            unitSelect.innerHTML = `
-                <option value="buc" ${item.unit === "buc" ? "selected" : ""}>buc</option>
-                <option value="m²" ${item.unit === "m²" ? "selected" : ""}>m²</option>
+            subDiv.innerHTML = `
+                <label>${subcategory}</label>
+                <input type="number" placeholder="Cantitate" value="${subcat.quantity}" onchange="updateQuantity('${category}', '${subcategory}', this.value)">
+                <input type="number" placeholder="Preț (€)" value="${subcat.price}" onchange="updatePrice('${category}', '${subcategory}', this.value)">
             `;
-            unitSelect.onchange = () => {
-                categories[category][index].unit = unitSelect.value;
-                saveCategories();
-                calculateTotal();
-            };
 
-            let deleteSubBtn = document.createElement("button");
-            deleteSubBtn.textContent = "✖";
-            deleteSubBtn.onclick = () => deleteSubfield(category, index);
-
-            label.appendChild(inputName);
-            label.appendChild(priceInput);
-            label.appendChild(quantityInput);
-            label.appendChild(unitSelect);
-            label.appendChild(deleteSubBtn);
-            subfieldsDiv.appendChild(label);
+            div.appendChild(subDiv);
         });
 
-        let addSubBtn = document.createElement("button");
-        addSubBtn.textContent = "+ Adaugă subcâmp";
-        addSubBtn.onclick = () => addSubfield(category);
-
-        subfieldsDiv.appendChild(addSubBtn);
-        div.appendChild(subfieldsDiv);
         container.appendChild(div);
-    }
+    });
+
+    updateTotal();
 }
 
-// Afișare/ascundere subcâmpuri
-function toggleSubfields(id) {
-    let element = document.getElementById(id);
-    element.style.display = element.style.display === "none" ? "block" : "none";
+// 🔹 Actualizare cantitate
+function updateQuantity(category, subcategory, value) {
+    categories[category].subcategories[subcategory].quantity = parseFloat(value) || 0;
+    saveToFirebase();
+    updateTotal();
 }
 
-// Adăugare categorie nouă
-function addCategory() {
-    let name = prompt("Introduceți numele categoriei:");
-    if (name && !categories[name]) {
-        categories[name] = [];
-        saveCategories();
-        renderCategories();
-    }
+// 🔹 Actualizare preț
+function updatePrice(category, subcategory, value) {
+    categories[category].subcategories[subcategory].price = parseFloat(value) || 0;
+    saveToFirebase();
+    updateTotal();
 }
 
-// Editare nume categorie
-function editCategoryName(oldName, newName) {
-    if (newName && oldName !== newName && !categories[newName]) {
-        categories[newName] = categories[oldName];
-        delete categories[oldName];
-        saveCategories();
-        renderCategories();
-    }
-}
-
-// Ștergere categorie
-function deleteCategory(category) {
-    delete categories[category];
-    saveCategories();
-    renderCategories();
-}
-
-// Adăugare subcâmp
-function addSubfield(category) {
-    let name = prompt("Introduceți numele subcâmpului:");
-    if (name) {
-        categories[category].push({ name, price: 0, quantity: 1, unit: "buc" });
-        saveCategories();
-        renderCategories();
-    }
-}
-
-// Editare subcâmp
-function editSubfield(category, index, newName) {
-    categories[category][index].name = newName;
-    saveCategories();
-}
-
-// Ștergere subcâmp
-function deleteSubfield(category, index) {
-    categories[category].splice(index, 1);
-    saveCategories();
-    renderCategories();
-}
-
-// Salvare date
-function saveCategories() {
-    localStorage.setItem("categories", JSON.stringify(categories));
-}
-
-// Calcul totaluri
-function calculateTotal() {
-    let totalEuro = 0;
-    for (let category in categories) {
-        categories[category].forEach(item => {
-            totalEuro += item.price * item.quantity;
-        });
-    }
+// 🔹 Calcul total
+function updateTotal() {
+    let totalEuro = Object.values(categories).reduce((sum, cat) => 
+        sum + Object.values(cat.subcategories).reduce((s, sub) => s + sub.quantity * sub.price, 0), 0);
     
-    document.getElementById("total-euro").textContent = totalEuro.toFixed(2);
-    document.getElementById("total-lei").textContent = (totalEuro * 19).toFixed(2);
+    document.getElementById("totalEuro").textContent = totalEuro.toFixed(2);
+    document.getElementById("totalLei").textContent = (totalEuro * 19).toFixed(2);
 }
 
-// Inițializare
-document.addEventListener("DOMContentLoaded", init);
+// 🔹 Inițializare
+document.addEventListener("DOMContentLoaded", loadFromFirebase);
