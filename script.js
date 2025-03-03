@@ -2,30 +2,31 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-// 🔹 Configurare Firebase (înlocuiește cu datele tale)
+// Configurare Firebase
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "proiectul-tău.firebaseapp.com",
-    databaseURL: "https://proiectul-tău.firebaseio.com",
-    projectId: "proiectul-tău",
-    storageBucket: "proiectul-tău.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdefghij"
+  apiKey: "AIzaSyDVAp7PaK7dNksfVhjXio4svEraal-7x_M",
+  authDomain: "mobokitchenshome.firebaseapp.com",
+  databaseURL: "https://mobokitchenshome-default-rtdb.firebaseio.com",  // ADĂUGAT LINK PENTRU DATABASE
+  projectId: "mobokitchenshome",
+  storageBucket: "mobokitchenshome.appspot.com",  // CORECTAT LINK-UL STORAGE
+  messagingSenderId: "1060936386110",
+  appId: "1:1060936386110:web:cc26a6a3741b4d1bdff36f",
+  measurementId: "G-E9CPCNXR7V"
 };
 
-// 🔹 Inițializează Firebase
+// Inițializează Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-// 🔹 Obiectul unde stocăm datele
+// Obiect unde salvăm datele calculatorului
 let categories = {};
 
-// 🔹 Salvare automată în Firebase
+// Salvare automată în Firebase
 function saveToFirebase() {
     set(ref(database, "calculator"), categories);
 }
 
-// 🔹 Încărcare date din Firebase
+// Încărcare date salvate din Firebase
 function loadFromFirebase() {
     const dbRef = ref(database, "calculator");
     get(dbRef).then((snapshot) => {
@@ -36,7 +37,7 @@ function loadFromFirebase() {
     });
 }
 
-// 🔹 Ascultă modificările în timp real
+// Ascultă modificările și actualizează interfața în timp real
 onValue(ref(database, "calculator"), (snapshot) => {
     if (snapshot.exists()) {
         categories = snapshot.val();
@@ -44,7 +45,7 @@ onValue(ref(database, "calculator"), (snapshot) => {
     }
 });
 
-// 🔹 Funcție pentru a genera calculatorul pe pagină
+// Funcție pentru afișarea calculatorului
 function renderCalculator() {
     const container = document.getElementById("calculator");
     container.innerHTML = "";
@@ -74,21 +75,21 @@ function renderCalculator() {
     updateTotal();
 }
 
-// 🔹 Actualizare cantitate
+// Actualizare cantitate
 function updateQuantity(category, subcategory, value) {
     categories[category].subcategories[subcategory].quantity = parseFloat(value) || 0;
     saveToFirebase();
     updateTotal();
 }
 
-// 🔹 Actualizare preț
+// Actualizare preț
 function updatePrice(category, subcategory, value) {
     categories[category].subcategories[subcategory].price = parseFloat(value) || 0;
     saveToFirebase();
     updateTotal();
 }
 
-// 🔹 Calcul total
+// Calcul total
 function updateTotal() {
     let totalEuro = Object.values(categories).reduce((sum, cat) => 
         sum + Object.values(cat.subcategories).reduce((s, sub) => s + sub.quantity * sub.price, 0), 0);
@@ -97,5 +98,5 @@ function updateTotal() {
     document.getElementById("totalLei").textContent = (totalEuro * 19).toFixed(2);
 }
 
-// 🔹 Inițializare
+// Inițializare
 document.addEventListener("DOMContentLoaded", loadFromFirebase);
