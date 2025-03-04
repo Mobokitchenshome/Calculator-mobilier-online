@@ -1,40 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.getElementById("categoryModal");
-    const openModalBtn = document.getElementById("openModal");
-    const closeModalBtn = document.querySelector(".close");
-    const addCategoryBtn = document.getElementById("addCategoryBtn");
-    const categoryInput = document.getElementById("categoryName");
-    const messageDiv = document.getElementById("message");
+    const fields = document.querySelectorAll(".field-group h2");
+    const totalEuroElem = document.getElementById("totalEuro");
+    const totalLeiElem = document.getElementById("totalLei");
+    const exchangeRate = 19;
 
-    openModalBtn.onclick = () => modal.style.display = "block";
-    closeModalBtn.onclick = () => modal.style.display = "none";
-    window.onclick = (event) => { if (event.target === modal) modal.style.display = "none"; };
+    fields.forEach(field => {
+        field.addEventListener("click", () => {
+            const subfields = field.nextElementSibling;
+            subfields.style.display = subfields.style.display === "none" ? "block" : "none";
+        });
+    });
 
-    addCategoryBtn.onclick = async function () {
-        let categoryName = categoryInput.value.trim();
-        if (!categoryName) return showMessage("❌ Introdu un nume pentru categorie!", false);
+    const inputs = document.querySelectorAll("input[type='number']");
+    inputs.forEach(input => {
+        input.addEventListener("input", calculateTotals);
+    });
 
-        if (await checkCategoryExists(categoryName)) {
-            return showMessage("❌ Categoria există deja!", false);
-        }
-
-        set(ref(database, "categories/" + categoryName), { subcategories: {} })
-            .then(() => {
-                showMessage(`✅ Categoria "${categoryName}" a fost adăugată!`);
-                categoryInput.value = "";
-                modal.style.display = "none";
-            })
-            .catch(() => showMessage("❌ Eroare la adăugare în Firebase.", false));
-    };
-
-    function showMessage(text, isSuccess = true) {
-        messageDiv.innerHTML = text;
-        messageDiv.style.color = isSuccess ? "green" : "red";
-        setTimeout(() => messageDiv.innerHTML = "", 3000);
-    }
-
-    async function checkCategoryExists(categoryName) {
-        const snapshot = await get(ref(database, "categories/" + categoryName));
-        return snapshot.exists();
+    function calculateTotals() {
+        let totalEuro = 0;
+        inputs.forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            totalEuro += value;
+        });
+        const totalLei = totalEuro * exchangeRate;
+        totalEuroElem.innerText = totalEuro.toFixed(2);
+        totalLeiElem.innerText = totalLei.toFixed(2);
     }
 });
