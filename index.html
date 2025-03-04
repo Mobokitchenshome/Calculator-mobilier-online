@@ -11,27 +11,21 @@
 
     <div id="calculator">
         <!-- Aici se vor genera câmpurile calculatorului -->
+        <div class="field-group">
+            <h2>1. Blaturi compact 12mm</h2>
+            <div class="subfields" style="display: none;">
+                <label>HPL (4100x1300) Fundermax</label>
+                <input type="number" data-unit="m2" placeholder="Valoare in Euro">
+                <!-- Adaugă restul câmpurilor secundare aici -->
+            </div>
+        </div>
+        <!-- Adaugă restul câmpurilor principale și secundare aici -->
     </div>
 
     <div id="totaluri">
         <p>Total în Euro: <span id="totalEuro">0</span> €</p>
         <p>Total în Lei: <span id="totalLei">0</span> MDL</p>
     </div>
-
-    <!-- Buton pentru adăugarea unei categorii -->
-    <button id="openModal">Adaugă Categorie</button>
-
-    <!-- Modal pentru introducerea categoriei -->
-    <div id="categoryModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Adaugă Categorie</h2>
-            <input type="text" id="categoryName" placeholder="Numele categoriei">
-            <button id="addCategoryBtn">Salvează</button>
-        </div>
-    </div>
-
-    <div id="message"></div>
 
     <script type="module" src="script.js"></script>
 </body>
